@@ -1,0 +1,2 @@
+python-decouple>=3.6
+itsdangerous>=2.1.2
