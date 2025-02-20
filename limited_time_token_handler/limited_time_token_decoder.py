@@ -12,7 +12,11 @@ logger = logging.getLogger(__name__)
 class LimitedTimeTokenDecoder:
     SECRET_KEY = config("SECRET_KEY", default=None)
 
-    def __init__(self: Self, token: str, max_age_secs: float = 60.0,) -> None:
+    def __init__(
+        self: Self,
+        token: str,
+        max_age_secs: float = 60.0,
+    ) -> None:
         self.token = token
         self.max_age_secs = max_age_secs
 
@@ -35,7 +39,7 @@ class LimitedTimeTokenDecoder:
         return URLSafeTimedSerializer(self.SECRET_KEY, salt=salt_token)
 
     def _handle_token_error(
-        self: Self, error_type: str, raise_exception: bool
+        self: Self, error_type: str, raise_exception: bool, default
     ) -> bool | Dict[str, Any]:
         error_messages = {
             "expired": "Token has expired. Please request a new token to continue.",
@@ -44,19 +48,21 @@ class LimitedTimeTokenDecoder:
         }
         if raise_exception:
             raise TokenError(error_messages[error_type])
-        return False if error_type != "format" else {}
+        return default
 
     def _process_token(
-        self: Self, raise_exception: bool = False, decode: bool = False
+        self: Self,
+        raise_exception: bool = False,
+        decode: bool = False,
+        default: Any = None,
     ) -> bool | Dict[str, Any]:
+        if not self.token:
+            return default
+
         token, salt_token = self.__validate(self.token)
 
         if not token or not salt_token:
-            return (
-                False
-                if not decode
-                else self._handle_token_error("format", raise_exception)
-            )
+            return default
 
         serializer = self._create_serializer(salt_token)
         try:
@@ -73,17 +79,19 @@ class LimitedTimeTokenDecoder:
                 if not decode
                 else "Token decoding failed - token has expired"
             )
-            return self._handle_token_error("expired", raise_exception)
+            return self._handle_token_error("expired", raise_exception, default)
         except BadSignature:
             logger.error(
                 "Invalid token signature detected during validation"
                 if not decode
                 else "Token decoding failed - invalid signature detected"
             )
-            return self._handle_token_error("invalid", raise_exception)
+            return self._handle_token_error("invalid", raise_exception, default)
 
     def is_valid(self: Self, raise_exception: bool = False) -> bool:
-        return self._process_token(raise_exception)
+        return self._process_token(raise_exception, default=False)
 
-    def decode(self: Self, raise_exception: bool = False) -> Dict[str, Any]:
-        return self._process_token(raise_exception, decode=True)
+    def decode(
+        self: Self, raise_exception: bool = False, default: Any = None
+    ) -> Dict[str, Any] | None:
+        return self._process_token(raise_exception, decode=True, default=default)

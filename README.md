@@ -22,19 +22,20 @@ pip install limited-time-token-handler
 
 ## Features
 
-- Secure token generation using cryptographic signatures
+- Secure token generation using cryptographic signatures and salting
 - Built-in token expiration management
 - Payload validation and type checking
 - Customizable expiration times
-- Comprehensive error handling
+- Comprehensive error handling with logging
 - Environment variable configuration
-- Extensive logging
+- Extensive debug and error logging
 
 ## Requirements
 
 - Python 3.7+
 - python-decouple
 - itsdangerous
+- logging
 
 ## Usage
 
@@ -51,7 +52,7 @@ payload = {
 
 # Generate a token
 generator = LimitedTimeTokenGenerator(payload)
-token = generator.generate()
+token = generator.generate()  # Returns str or None if failed
 ```
 
 ### Token Validation and Decoding
@@ -59,14 +60,14 @@ token = generator.generate()
 ```python
 from limited_time_token_handler import LimitedTimeTokenDecoder
 
-# Create a decoder instance (default expiry: 60 minutes)
-decoder = LimitedTimeTokenDecoder(token)
+# Create a decoder instance (default expiry: 60 seconds)
+decoder = LimitedTimeTokenDecoder(token, max_age_secs=60.0)
 
 # Validate token
-is_valid = decoder.is_valid()
+is_valid = decoder.is_valid()  # Returns bool
 
 # Decode token to get payload
-payload = decoder.decode()
+payload = decoder.decode()  # Returns Dict[str, Any] or None if invalid
 ```
 
 ## API Reference
@@ -74,21 +75,32 @@ payload = decoder.decode()
 ### LimitedTimeTokenGenerator
 
 #### `__init__(payload: Dict[str, Any])`
-Initializes the token generator with a payload dictionary.
+Initializes the token generator with a payload dictionary. Validates that a SECRET_KEY is configured and payload is a valid dictionary. Raises TokenError if validation fails.
 
-#### `generate(default: Any = None, raise_exception: bool = False) -> str | None`
-Generates a secure token containing the payload.
+#### `generate(raise_exception: bool = False, default: Any = None) -> str | None`
+Generates a secure token containing the payload with a unique salt. Returns:
+- str: Valid token if successful
+- None: If token generation fails and raise_exception=False
+- Raises TokenError: If token generation fails and raise_exception=True
+- default: Custom value if specified and generation fails
 
 ### LimitedTimeTokenDecoder
 
-#### `__init__(token: str, max_age_secs: int = 60)`
-Initializes the token decoder with a token string and optional expiry time.
+#### `__init__(token: str, max_age_secs: float = 60.0)`
+Initializes the token decoder with a token string and optional expiry time in seconds. Validates SECRET_KEY configuration. Raises TokenError if SECRET_KEY is not set.
 
 #### `is_valid(raise_exception: bool = False) -> bool`
-Validates if the token is valid and not expired.
+Validates if the token is valid and not expired. Returns:
+- True: Token is valid and not expired
+- False: If token is invalid/expired and raise_exception=False
+- Raises TokenError: If token validation fails and raise_exception=True
 
-#### `decode(raise_exception: bool = False) -> Dict[str, Any]`
-Decodes the token and returns the original payload.
+#### `decode(raise_exception: bool = False, default: Any = None) -> Dict[str, Any] | None`
+Decodes the token and returns the original payload. Returns:
+- Dict[str, Any]: Original payload if token is valid
+- None: If token is invalid and raise_exception=False
+- default: Custom value if specified and token is invalid
+- Raises TokenError: If token is invalid and raise_exception=True
 
 ## Examples
 
@@ -104,9 +116,9 @@ try:
     token = generator.generate(raise_exception=True)
 
     # Decode token
-    decoder = LimitedTimeTokenDecoder(token, max_age_secs=30)
+    decoder = LimitedTimeTokenDecoder(token, max_age_secs=30.0)
     if decoder.is_valid():
-        payload = decoder.decode()
+        payload = decoder.decode(default={})
         print(f"Decoded payload: {payload}")
     else:
         print("Token is invalid or expired")

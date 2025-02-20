@@ -42,7 +42,7 @@ class LimitedTimeTokenGenerator:
         return f"{token}|{salt_token}"
 
     def generate(
-        self: Self, default: Any = None, raise_exception: bool = False
+        self: Self, raise_exception: bool = False, default: Any = None
     ) -> str | None:
         try:
             salt_token = uuid4().hex
