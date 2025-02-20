@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="limited-time-token-handler",
-    version="0.1.0",
+    version="0.1.1",
     author="shailesh",
     author_email="shaileshpandit141@gmail.com",
     description=(
