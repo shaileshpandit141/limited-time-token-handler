@@ -12,9 +12,9 @@ logger = logging.getLogger(__name__)
 class LimitedTimeTokenDecoder:
     SECRET_KEY = config("SECRET_KEY", default=None)
 
-    def __init__(self: Self, token: str, token_expiry_minutes: int = 60) -> None:
+    def __init__(self: Self, token: str, max_age_secs: float = 60.0,) -> None:
         self.token = token
-        self.token_expiry_seconds = token_expiry_minutes * 60
+        self.max_age_secs = max_age_secs
 
         if not self.SECRET_KEY:
             raise TokenError("SECRET_KEY is not set in environment variables.")
@@ -60,7 +60,7 @@ class LimitedTimeTokenDecoder:
 
         serializer = self._create_serializer(salt_token)
         try:
-            result = serializer.loads(token, max_age=self.token_expiry_seconds)
+            result = serializer.loads(token, max_age=self.max_age_secs)
             logger.debug(
                 "Token validation successful"
                 if not decode

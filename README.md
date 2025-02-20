@@ -81,7 +81,7 @@ Generates a secure token containing the payload.
 
 ### LimitedTimeTokenDecoder
 
-#### `__init__(token: str, token_expiry_minutes: int = 60)`
+#### `__init__(token: str, max_age_secs: int = 60)`
 Initializes the token decoder with a token string and optional expiry time.
 
 #### `is_valid(raise_exception: bool = False) -> bool`
@@ -104,7 +104,7 @@ try:
     token = generator.generate(raise_exception=True)
 
     # Decode token
-    decoder = LimitedTimeTokenDecoder(token, token_expiry_minutes=30)
+    decoder = LimitedTimeTokenDecoder(token, max_age_secs=30)
     if decoder.is_valid():
         payload = decoder.decode()
         print(f"Decoded payload: {payload}")
