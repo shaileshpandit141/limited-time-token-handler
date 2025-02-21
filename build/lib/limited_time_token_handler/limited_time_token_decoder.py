@@ -3,7 +3,7 @@ from typing import Any, Dict, Self
 
 from decouple import config
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
-
+from urllib.parse import unquote
 from .token_error import TokenError
 
 logger = logging.getLogger(__name__)
@@ -23,14 +23,14 @@ class LimitedTimeTokenDecoder:
         if not self.SECRET_KEY:
             raise TokenError("SECRET_KEY is not set in environment variables.")
 
-    def __validate(
+    def __split_token(
         self: Self, token: str | None
     ) -> tuple[str, str] | tuple[None, None]:
         if not token:
             return None, None
 
         try:
-            token_part, salt_token = token.rsplit("|", 1)
+            token_part, salt_token = unquote(token).rsplit("|", 1)
             return token_part, salt_token
         except ValueError:
             return None, None
@@ -54,7 +54,7 @@ class LimitedTimeTokenDecoder:
         if not self.token:
             return False
 
-        token, salt_token = self.__validate(self.token)
+        token, salt_token = self.__split_token(self.token)
 
         if not token or not salt_token:
             return False
@@ -79,7 +79,7 @@ class LimitedTimeTokenDecoder:
         if not self.token:
             return default
 
-        token, salt_token = self.__validate(self.token)
+        token, salt_token = self.__split_token(self.token)
 
         if not token or not salt_token:
             return default
