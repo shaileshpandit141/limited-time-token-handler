@@ -95,7 +95,7 @@ Validates if the token is valid and not expired. Returns:
 - False: If token is invalid/expired and raise_exception=False
 - Raises TokenError: If token validation fails and raise_exception=True
 
-#### `decode(raise_exception: bool = False, default: Any = None) -> Dict[str, Any] | None`
+#### `decode(raise_exception: bool = False, default: Dict[str, Any] = {}) -> Dict[str, Any]`
 Decodes the token and returns the original payload. Returns:
 - Dict[str, Any]: Original payload if token is valid
 - None: If token is invalid and raise_exception=False
