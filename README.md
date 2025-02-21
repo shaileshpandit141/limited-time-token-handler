@@ -61,7 +61,7 @@ token = generator.generate()  # Returns str or None if failed
 from limited_time_token_handler import LimitedTimeTokenDecoder
 
 # Create a decoder instance (default expiry: 60 seconds)
-decoder = LimitedTimeTokenDecoder(token, max_age_secs=60.0)
+decoder = LimitedTimeTokenDecoder(token, max_age_seconds=60)
 
 # Validate token
 is_valid = decoder.is_valid()  # Returns bool
@@ -86,7 +86,7 @@ Generates a secure token containing the payload with a unique salt. Returns:
 
 ### LimitedTimeTokenDecoder
 
-#### `__init__(token: str, max_age_secs: float = 60.0)`
+#### `__init__(token: str, max_age_seconds: int = 60)`
 Initializes the token decoder with a token string and optional expiry time in seconds. Validates SECRET_KEY configuration. Raises TokenError if SECRET_KEY is not set.
 
 #### `is_valid(raise_exception: bool = False) -> bool`
@@ -116,7 +116,7 @@ try:
     token = generator.generate(raise_exception=True)
 
     # Decode token
-    decoder = LimitedTimeTokenDecoder(token, max_age_secs=30.0)
+    decoder = LimitedTimeTokenDecoder(token, max_age_seconds=30)
     if decoder.is_valid():
         payload = decoder.decode(default={})
         print(f"Decoded payload: {payload}")
