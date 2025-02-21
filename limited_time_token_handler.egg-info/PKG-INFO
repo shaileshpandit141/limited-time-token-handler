@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: limited-time-token-handler
-Version: 0.1.4
+Version: 0.1.5
 Summary: A Python package designed to handle secure, time-limited token generation and validation.
 Home-page: https://github.com/shaileshpandit141/limited-time-token-handler.git
 Author: shailesh
@@ -109,7 +109,7 @@ Validates if the token is valid and not expired. Returns:
 - False: If token is invalid/expired and raise_exception=False
 - Raises TokenError: If token validation fails and raise_exception=True
 
-#### `decode(raise_exception: bool = False, default: Any = None) -> Dict[str, Any] | None`
+#### `decode(raise_exception: bool = False, default: Dict[str, Any] = {}) -> Dict[str, Any]`
 Decodes the token and returns the original payload. Returns:
 - Dict[str, Any]: Original payload if token is valid
 - None: If token is invalid and raise_exception=False

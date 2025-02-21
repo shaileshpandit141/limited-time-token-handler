@@ -75,7 +75,7 @@ class LimitedTimeTokenDecoder:
         self: Self,
         raise_exception: bool = False,
         default: Any = None,
-    ) -> Dict[str, Any] | None:
+    ) -> Dict[str, Any]:
         if not self.token:
             return default
 
@@ -100,6 +100,6 @@ class LimitedTimeTokenDecoder:
         return self._validate_token(raise_exception)
 
     def decode(
-        self: Self, raise_exception: bool = False, default: Any = None
-    ) -> Dict[str, Any] | None:
+        self: Self, raise_exception: bool = False, default: Dict[str, Any] = {}
+    ) -> Dict[str, Any]:
         return self._decode_token(raise_exception, default=default)
