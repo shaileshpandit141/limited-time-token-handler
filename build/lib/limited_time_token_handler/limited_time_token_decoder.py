@@ -15,9 +15,9 @@ class LimitedTimeTokenDecoder:
     def __init__(
         self: Self,
         token: str,
-        max_age_seconds: int = 60,
+        max_age_seconds: int = 60 * 20,
     ) -> None:
-        self.token = token
+        self.token = str(token)
         self.max_age_seconds = max_age_seconds
 
         if not self.SECRET_KEY:
