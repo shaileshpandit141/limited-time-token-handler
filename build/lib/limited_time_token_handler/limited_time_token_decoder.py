@@ -50,18 +50,14 @@ class LimitedTimeTokenDecoder:
             raise TokenError(error_messages[error_type])
         return default
 
-    def _validate_token(
-        self: Self,
-        raise_exception: bool = False,
-        default: Any = None,
-    ) -> bool:
+    def _validate_token(self: Self, raise_exception: bool = False) -> bool:
         if not self.token:
-            return default
+            return False
 
         token, salt_token = self.__validate(self.token)
 
         if not token or not salt_token:
-            return default
+            return False
 
         serializer = self._create_serializer(salt_token)
         try:
@@ -70,10 +66,10 @@ class LimitedTimeTokenDecoder:
             return True
         except SignatureExpired:
             logger.warning("Token has expired - validation failed")
-            return self._handle_token_error("expired", raise_exception, default)
+            return self._handle_token_error("expired", raise_exception, False)
         except BadSignature:
             logger.error("Invalid token signature detected during validation")
-            return self._handle_token_error("invalid", raise_exception, default)
+            return self._handle_token_error("invalid", raise_exception, False)
 
     def _decode_token(
         self: Self,
@@ -101,7 +97,7 @@ class LimitedTimeTokenDecoder:
             return self._handle_token_error("invalid", raise_exception, default)
 
     def is_valid(self: Self, raise_exception: bool = False) -> bool:
-        return self._validate_token(raise_exception, default=False)
+        return self._validate_token(raise_exception)
 
     def decode(
         self: Self, raise_exception: bool = False, default: Any = None
