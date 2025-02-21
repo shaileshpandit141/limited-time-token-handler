@@ -15,10 +15,10 @@ class LimitedTimeTokenDecoder:
     def __init__(
         self: Self,
         token: str,
-        max_age_secs: float = 60.0,
+        max_age_seconds: int = 60,
     ) -> None:
         self.token = token
-        self.max_age_secs = max_age_secs
+        self.max_age_seconds = max_age_seconds
 
         if not self.SECRET_KEY:
             raise TokenError("SECRET_KEY is not set in environment variables.")
@@ -36,11 +36,11 @@ class LimitedTimeTokenDecoder:
             return None, None
 
     def _create_serializer(self: Self, salt_token: str) -> URLSafeTimedSerializer:
-        return URLSafeTimedSerializer(self.SECRET_KEY, salt=salt_token)
+        return URLSafeTimedSerializer(str(self.SECRET_KEY), salt=salt_token)
 
     def _handle_token_error(
-        self: Self, error_type: str, raise_exception: bool, default
-    ) -> bool | Dict[str, Any]:
+        self: Self, error_type: str, raise_exception: bool, default: Any
+    ) -> Any:
         error_messages = {
             "expired": "Token has expired. Please request a new token to continue.",
             "invalid": "Invalid Token provided. Please request a new token.",
@@ -50,12 +50,11 @@ class LimitedTimeTokenDecoder:
             raise TokenError(error_messages[error_type])
         return default
 
-    def _process_token(
+    def _validate_token(
         self: Self,
         raise_exception: bool = False,
-        decode: bool = False,
         default: Any = None,
-    ) -> bool | Dict[str, Any]:
+    ) -> bool:
         if not self.token:
             return default
 
@@ -66,32 +65,45 @@ class LimitedTimeTokenDecoder:
 
         serializer = self._create_serializer(salt_token)
         try:
-            result = serializer.loads(token, max_age=self.max_age_secs)
-            logger.debug(
-                "Token validation successful"
-                if not decode
-                else "Token successfully decoded and payload extracted"
-            )
-            return True if not decode else result
+            serializer.loads(token, max_age=self.max_age_seconds)
+            logger.debug("Token validation successful")
+            return True
         except SignatureExpired:
-            logger.warning(
-                "Token has expired - validation failed"
-                if not decode
-                else "Token decoding failed - token has expired"
-            )
+            logger.warning("Token has expired - validation failed")
             return self._handle_token_error("expired", raise_exception, default)
         except BadSignature:
-            logger.error(
-                "Invalid token signature detected during validation"
-                if not decode
-                else "Token decoding failed - invalid signature detected"
-            )
+            logger.error("Invalid token signature detected during validation")
+            return self._handle_token_error("invalid", raise_exception, default)
+
+    def _decode_token(
+        self: Self,
+        raise_exception: bool = False,
+        default: Any = None,
+    ) -> Dict[str, Any] | None:
+        if not self.token:
+            return default
+
+        token, salt_token = self.__validate(self.token)
+
+        if not token or not salt_token:
+            return default
+
+        serializer = self._create_serializer(salt_token)
+        try:
+            result = serializer.loads(token, max_age=self.max_age_seconds)
+            logger.debug("Token successfully decoded and payload extracted")
+            return result
+        except SignatureExpired:
+            logger.warning("Token decoding failed - token has expired")
+            return self._handle_token_error("expired", raise_exception, default)
+        except BadSignature:
+            logger.error("Token decoding failed - invalid signature detected")
             return self._handle_token_error("invalid", raise_exception, default)
 
     def is_valid(self: Self, raise_exception: bool = False) -> bool:
-        return self._process_token(raise_exception, default=False)
+        return self._validate_token(raise_exception, default=False)
 
     def decode(
         self: Self, raise_exception: bool = False, default: Any = None
     ) -> Dict[str, Any] | None:
-        return self._process_token(raise_exception, decode=True, default=default)
+        return self._decode_token(raise_exception, default=default)

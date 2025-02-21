@@ -37,7 +37,7 @@ class LimitedTimeTokenGenerator:
             raise TokenError("Invalid payload type. Expected dictionary.")
 
     def _create_token(self, salt_token: str) -> str:
-        serializer = URLSafeTimedSerializer(self.SECRET_KEY, salt=salt_token)
+        serializer = URLSafeTimedSerializer(str(self.SECRET_KEY), salt=salt_token)
         token = serializer.dumps(self.payload)
         return f"{token}|{salt_token}"
 
