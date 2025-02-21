@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: limited-time-token-handler
-Version: 0.1.2
+Version: 0.1.3
 Summary: A Python package designed to handle secure, time-limited token generation and validation.
 Home-page: https://github.com/shaileshpandit141/limited-time-token-handler.git
 Author: shailesh
