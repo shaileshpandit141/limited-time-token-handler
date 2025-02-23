@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: limited-time-token-handler
-Version: 0.1.8
+Version: 0.1.9
 Summary: A Python package designed to handle secure, time-limited token generation and validation.
 Home-page: https://github.com/shaileshpandit141/limited-time-token-handler.git
 Author: shailesh
@@ -19,8 +19,9 @@ It provides functionality for creating and decoding tokens with built-in expirat
 
 ## Release Notes
 
-- [Version 0.1.7](./docs/version-0.1.7.md)
-- [Version 0.1.8](./docs/version-0.1.8.md)
+- [Version 0.1.7](https://github.com/shaileshpandit141/limited-time-token-handler/blob/main/docs/version-0.1.7.md)
+- [Version 0.1.8](https://github.com/shaileshpandit141/limited-time-token-handler/blob/main/docs/version-0.1.8.md)
+- [Version 0.1.9](https://github.com/shaileshpandit141/limited-time-token-handler/blob/main/docs/version-0.1.9.md)
 
 ## Table of Contents
 - [Installation](#installation)
