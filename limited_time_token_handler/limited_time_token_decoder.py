@@ -1,9 +1,11 @@
 import logging
 from typing import Any, Dict, Self
+from urllib.parse import unquote
+import time
 
 from decouple import config
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
-from urllib.parse import unquote
+
 from .token_error import TokenError
 
 logger = logging.getLogger(__name__)
@@ -12,13 +14,8 @@ logger = logging.getLogger(__name__)
 class LimitedTimeTokenDecoder:
     SECRET_KEY = config("SECRET_KEY", default=None)
 
-    def __init__(
-        self: Self,
-        token: str,
-        max_age_seconds: int = 60 * 20,
-    ) -> None:
+    def __init__(self: Self, token: str) -> None:
         self.token = str(token)
-        self.max_age_seconds = max_age_seconds
 
         if not self.SECRET_KEY:
             raise TokenError("SECRET_KEY is not set in environment variables.")
@@ -50,6 +47,15 @@ class LimitedTimeTokenDecoder:
             raise TokenError(error_messages[error_type])
         return default
 
+    def _is_token_expired(self: Self, timestamp, max_age_seconds) -> bool:
+        token_time = int(timestamp.timestamp())
+        current_time = int(time.time())
+
+        # Check if the token has expired
+        if (current_time - token_time) > max_age_seconds:
+            return True
+        return False
+
     def _validate_token(self: Self, raise_exception: bool = False) -> bool:
         if not self.token:
             return False
@@ -61,7 +67,12 @@ class LimitedTimeTokenDecoder:
 
         serializer = self._create_serializer(salt_token)
         try:
-            serializer.loads(token, max_age=self.max_age_seconds)
+            payload, timestamp = serializer.loads(token, return_timestamp=True)
+            max_age_seconds = payload.get("max_age_seconds", 0)
+            if self._is_token_expired(timestamp, max_age_seconds):
+                logger.warning("Token has expired - decoding failed")
+                return self._handle_token_error("expired", raise_exception, False)
+
             logger.debug("Token validation successful")
             return True
         except SignatureExpired:
@@ -86,9 +97,15 @@ class LimitedTimeTokenDecoder:
 
         serializer = self._create_serializer(salt_token)
         try:
-            result = serializer.loads(token, max_age=self.max_age_seconds)
+            payload, timestamp = serializer.loads(token, return_timestamp=True)
+            max_age_seconds = payload.get("max_age_seconds", 0)
+            if self._is_token_expired(timestamp, max_age_seconds):
+                logger.warning("Token has expired - decoding failed")
+                return self._handle_token_error("expired", raise_exception, default)
+
             logger.debug("Token successfully decoded and payload extracted")
-            return result
+            payload.pop("max_age_seconds", None)
+            return payload
         except SignatureExpired:
             logger.warning("Token decoding failed - token has expired")
             return self._handle_token_error("expired", raise_exception, default)
